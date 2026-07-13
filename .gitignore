@@ -18,3 +18,19 @@ credentials.*
 node_modules/
 .firebase/
 firebase-debug*.log
+# 本機測試與暫存輸出
+tmp/
+
+# 題庫工具的私人來源與大型產物
+tools/question-paper-builder/private/legacy-app/pdfs/
+tools/question-paper-builder/private/legacy-app/static/cropped/
+tools/question-paper-builder/private/legacy-app/questions.json
+
+# Python 快取
+__pycache__/
+*.pyc
+
+tools/question-paper-builder/private/source-answer-keys/
+tools/question-paper-builder/private/answer-work/
+tools/question-paper-builder/public/data/answers.json
+tools/question-paper-builder/public/vendor/jszip-*.js

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歷屆篩選測驗出卷系統</title>
+    <!-- Google Fonts: Outfit and Noto Sans TC -->
+    <link rel="stylesheet" href="./css/style.css?v=20260713-4">
+</head>
+<body>
+    <div class="stars-container"></div>
+    <div class="app-container">
+        <!-- 頂部導覽列 -->
+        <header class="glass-panel main-header">
+            <div class="logo-area">
+                <span class="logo-icon">📚</span>
+                <div class="logo-text">
+                    <h1>歷屆篩選測驗出卷系統</h1>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要內容區域 -->
+        <main class="main-content">
+            
+            <!-- 主要出卷頁面 (Generator) -->
+            <section id="tab-generator" class="tab-content active">
+                <div class="generator-layout-v3">
+                    <!-- 頂部與左側篩選面板 (完全比照使用者圖片) -->
+                    <div class="glass-panel filter-layout-top">
+                        <!-- 左欄：指定抽取年份 -->
+                        <div class="year-panel">
+                            <div class="filter-header-row">
+                                <h3 class="panel-step-title">1. 指定抽取年份</h3>
+                                <button type="button" id="btn-toggle-all-years" class="text-btn-small">全選</button>
+                            </div>
+                            <div id="year-checkboxes-container" class="year-checkboxes-list">
+                                <!-- 動態產生年份 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 右欄：科目年級與題型選單 -->
+                        <div class="selection-panel">
+                            <!-- 科目與年級 -->
+                            <div class="subject-grade-row">
+                                <div class="sel-group">
+                                    <h3 class="panel-step-title">2. 選擇科目與年級</h3>
+                                    <div class="select-inline-group">
+                                        <select id="filter-subject" class="styled-select">
+                                            <option value="">選擇科目</option>
+                                        </select>
+                                        <select id="filter-grade" class="styled-select">
+                                            <option value="">選擇年級</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 題型分配 -->
+                            <div class="type-panel">
+                                <h3 class="panel-step-title">3. 選擇題型、分配題數或全選</h3>
+                                <div id="type-rows-container" class="type-rows-list">
+                                    <!-- 動態產生七大題型列，包含色塊、輸入框、全選按鈕 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 下半部排版 -->
+                    <div class="generator-bottom-layout">
+                        <!-- 左邊：題目搜尋結果 -->
+                        <div class="glass-panel results-panel">
+                            <div class="panel-header-row">
+                                <h2>📚 題庫搜尋結果 (<span id="stat-filtered-q">0</span> 題符合)</h2>
+                                <button id="btn-add-all" class="secondary-btn small-btn">加全部至考卷 ➕</button>
+                            </div>
+                            <div id="results-grid" class="results-grid">
+                                <!-- 動態載入符合條件的題目 -->
+                                <div class="no-results">無符合篩選條件的題目，請選取年份與題型。</div>
+                            </div>
+                        </div>
+
+                    <!-- 右側考卷裝訂與匯出 -->
+                    <div class="glass-panel paper-panel">
+                        <h2>📝 試卷設定與匯出</h2>
+                        <div class="paper-setup-form">
+                            <div class="form-group">
+                                <label for="paper-title">考卷大標題</label>
+                                <input type="text" id="paper-title" value="歷屆篩選測驗">
+                            </div>
+                            <div class="form-group">
+                                <label for="paper-subtitle">副標題 (如：三年級國語科)</label>
+                                <input type="text" id="paper-subtitle" placeholder="如：國語科 範圍：第一課～第七課">
+                            </div>
+                            <div class="form-group">
+                                <label for="paper-sort-order">題目排列順序</label>
+                                <select id="paper-sort-order">
+                                    <option value="random">按照題目類型隨機排列（不分年份）</option>
+                                    <option value="year">按照年份排列（年份由小到大）</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="paper-list-header">
+                            <h3>已選題目 (<span id="paper-q-count">0</span> 題)</h3>
+                            <button id="btn-clear-paper" class="text-btn">清空考卷 🗑️</button>
+                        </div>
+
+                        <div id="paper-questions-list" class="paper-questions-list">
+                            <!-- 已選入考卷的題目列表，支援上下排序 -->
+                            <div class="empty-paper-placeholder">
+                                <span class="placeholder-icon">📋</span>
+                                <p>尚未選入題目<br>請從左側的搜尋結果中點選「➕ 加入考卷」</p>
+                            </div>
+                        </div>
+
+                        <button id="btn-download-word" class="primary-btn w-100 export-btn" disabled>
+                            <span>📥 生成並下載 Word 檔 (.docx)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </section>
+
+        </main>
+        
+        <!-- 全域通知浮窗 -->
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <!-- 載入 JS 模組 -->
+    <script src="./vendor/docx-9.7.1.iife.js"></script>
+    <script src="./js/app.js"></script>
+    <script src="./js/word-export.js?v=20260713-7"></script>
+    <script src="./js/generator.js?v=20260713-6"></script>
+</body>
+</html>
