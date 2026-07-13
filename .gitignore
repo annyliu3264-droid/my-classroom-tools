@@ -1,0 +1,20 @@
+# 雲端同步與系統檔
+desktop.ini
+*.tmp
+~$*
+
+# 敏感資料
+.env
+.env.*
+*.key
+credentials.*
+*service-account*.json
+
+# AI 工具本機設定
+.codex/
+.claude/
+
+# Node.js 與 Firebase 快取
+node_modules/
+.firebase/
+firebase-debug*.log
