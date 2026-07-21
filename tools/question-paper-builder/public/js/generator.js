@@ -4,7 +4,7 @@
     let selectedQuestions = []; // 考卷內的題目
     let currentTimestamp = "";
     
-    const ASSET_VERSION = "20260713-rt4";
+    const ASSET_VERSION = "20260721-v1";
     const SOURCE_COLUMN_WIDTH = 1000;
 
     function normalizeStackedPreviewImage(image) {
