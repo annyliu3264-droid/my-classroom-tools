@@ -4,27 +4,6 @@
     let selectedQuestions = []; // 考卷內的題目
     let currentTimestamp = "";
     
-    const ASSET_VERSION = "20260713-rt4";
-    const SOURCE_COLUMN_WIDTH = 1000;
-
-    function normalizeStackedPreviewImage(image) {
-        const applyScale = () => {
-            const widthPercent = Math.min(100, image.naturalWidth / SOURCE_COLUMN_WIDTH * 100);
-            image.style.width = `${widthPercent}%`;
-        };
-        if (image.complete && image.naturalWidth) {
-            applyScale();
-        } else {
-            image.addEventListener('load', applyScale, { once: true });
-        }
-    }
-
-    function versionAssetPath(path) {
-        if (!path) return path;
-        const separator = path.includes('?') ? '&' : '?';
-        return `${path}${separator}v=${ASSET_VERSION}`;
-    }
-
     const STANDARD_TYPES = [
         "注音_書寫",
         "字詞_書寫",
@@ -79,7 +58,7 @@
             }
         });
         
-        return parts.join(',');
+        return parts.join('、');
     }
 
     function updateDefaultTitle() {
@@ -87,10 +66,8 @@
         if (!paperTitleInput) return;
         
         const yearsStr = getFormattedYearsString();
-    const yearPart = yearsStr ? `(${yearsStr})` : "";
-    const subject = document.getElementById('filter-subject')?.value || "";
-    const subjectPart = subject ? `${subject}科` : "";
-    paperTitleInput.value = `歷屆篩選測驗${subjectPart}${yearPart}`;
+        const yearPart = yearsStr ? `(${yearsStr})` : "";
+        paperTitleInput.value = `歷屆篩選測驗國語科${yearPart}-${currentTimestamp}`;
     }
     
     // 初始化
@@ -103,7 +80,7 @@
             const HH = String(now.getHours()).padStart(2, '0');
             const mm = String(now.getMinutes()).padStart(2, '0');
             currentTimestamp = `${MM}${DD}${HH}${mm}`;
-            paperTitleInput.value = `歷屆篩選測驗`;
+            paperTitleInput.value = `歷屆篩選測驗國語科-${currentTimestamp}`;
         }
         
         setupGeneratorEvents();
@@ -114,16 +91,10 @@
     // 1. 從後端載入所有題目
     async function loadQuestions() {
         try {
-            const res = await fetch('./data/questions.json', { cache: 'no-cache' });
-            const questions = await res.json();
-            allQuestions = questions.map(question => ({
-                ...question,
-                imagePath: versionAssetPath(question.imagePath),
-                imagePaths: (question.imagePaths || []).map(versionAssetPath)
-            }));
+            const res = await fetch('/api/questions');
+            allQuestions = await res.json();
             
             // 初始化複選核取方塊
-            initFilterOptions();
             initYearCheckboxes();
             initTypeRows();
             
@@ -136,37 +107,6 @@
     }
     
     // 2. 初始化年份複選框 (預設選中 112, 113, 114)
-    function initFilterOptions() {
-        const subjectSelect = document.getElementById('filter-subject');
-        const gradeSelect = document.getElementById('filter-grade');
-        const previousSubject = subjectSelect?.value;
-        const previousGrade = gradeSelect?.value;
-        const subjects = [...new Set(allQuestions.map(q => q.subject).filter(Boolean))].sort();
-        const gradeOrder = ['\u4e00\u5e74\u7d1a', '\u4e8c\u5e74\u7d1a', '\u4e09\u5e74\u7d1a', '\u56db\u5e74\u7d1a', '\u4e94\u5e74\u7d1a', '\u516d\u5e74\u7d1a'];
-        const grades = [...new Set(allQuestions.map(q => q.grade).filter(Boolean))]
-            .sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
-        const fill = (select, values, preferred, placeholder) => {
-            if (!select) return;
-            select.innerHTML = '';
-            const emptyOption = document.createElement('option');
-            emptyOption.value = '';
-            emptyOption.textContent = placeholder;
-            select.appendChild(emptyOption);
-            values.forEach(value => {
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                select.appendChild(option);
-            });
-            select.value = values.includes(preferred) ? preferred : '';
-        };
-        fill(subjectSelect, subjects, previousSubject, '選擇科目');
-        fill(gradeSelect, grades, previousGrade, '選擇年級');
-        [...new Set(allQuestions.map(q => q.type).filter(Boolean))].forEach(type => {
-            if (!STANDARD_TYPES.includes(type)) STANDARD_TYPES.push(type);
-        });
-    }
-
     function initYearCheckboxes() {
         const container = document.getElementById('year-checkboxes-container');
         container.innerHTML = '';
@@ -188,8 +128,12 @@
             checkbox.value = year;
             checkbox.className = 'year-filter-cb';
             
-            // 年份預設全部不選，讓老師先明確指定題庫範圍。
-            checkbox.checked = false;
+            // 預設選中 112 (2023), 113 (2024), 114 (2025)
+            if (parseInt(year) >= 112) {
+                checkbox.checked = true;
+            } else {
+                checkbox.checked = false;
+            }
             
             checkbox.addEventListener('change', () => {
                 updateLabelsHighlight();
@@ -224,7 +168,7 @@
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = type;
-            checkbox.checked = false; // 預設不勾選，交由老師選擇
+            checkbox.checked = true; // 預設勾選
             checkbox.className = 'type-row-cb';
             checkbox.id = `cb-${type}`;
             
@@ -433,14 +377,13 @@
         const gradeVal = document.getElementById('filter-grade') ? document.getElementById('filter-grade').value : "一年級";
         const subjectVal = document.getElementById('filter-subject') ? document.getElementById('filter-subject').value : "國語";
         
-        const hasCompleteFilters = Boolean(gradeVal && subjectVal && selectedYears.length > 0);
-        const filtered = hasCompleteFilters ? allQuestions.filter(q => {
+        const filtered = allQuestions.filter(q => {
             if (q.grade !== gradeVal) return false;
             if (q.subject !== subjectVal) return false;
-            if (!selectedYears.includes(q.year)) return false;
+            if (selectedYears.length > 0 && !selectedYears.includes(q.year)) return false;
             if (selectedTypes.length > 0 && !selectedTypes.includes(q.type)) return false;
             return true;
-        }) : [];
+        });
         
         document.getElementById('stat-filtered-q').textContent = filtered.length;
         renderResultsGrid(filtered);
@@ -496,13 +439,13 @@
                 <div class="q-card-info">
                     <div class="q-card-tags">${tagsHtml}</div>
                     <div class="q-card-action">
+                        <button class="btn-delete-q" data-id="${q.id}">刪除 🗑️</button>
                         <button class="secondary-btn small-btn btn-add-q" data-id="${q.id}">➕ 加入</button>
                     </div>
                 </div>
             `;
             
             grid.appendChild(card);
-            card.querySelectorAll('.preview-img-stacked').forEach(normalizeStackedPreviewImage);
         });
         
         // 綁定事件
@@ -510,6 +453,15 @@
             btn.addEventListener('click', () => {
                 const qId = btn.getAttribute('data-id');
                 addQuestionToPaper(qId);
+            });
+        });
+        
+        grid.querySelectorAll('.btn-delete-q').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const qId = btn.getAttribute('data-id');
+                if (confirm('⚠️ 確定要將此題目從題庫中永久刪除嗎？')) {
+                    deleteQuestionFromDb(qId);
+                }
             });
         });
     }
@@ -622,7 +574,30 @@
     }
     
     // 10. 刪除題目 API 串接
-
+    async function deleteQuestionFromDb(qId) {
+        try {
+            const response = await fetch('/api/questions/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: qId })
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast('已從資料庫中永久刪除！');
+                selectedQuestions = selectedQuestions.filter(q => q.id !== qId);
+                renderPaperList();
+                loadQuestions();
+            } else {
+                showToast('刪除失敗: ' + result.error, 'error');
+            }
+        } catch (err) {
+            console.error('刪除 API 錯誤:', err);
+            showToast('網路錯誤，無法刪除題目！', 'error');
+        }
+    }
     
     // 11. 隨機洗牌函式
     function shuffleArray(array) {
@@ -649,7 +624,6 @@
         if (filterSubject) {
             filterSubject.addEventListener('change', () => {
                 updateLabelsHighlight();
-                updateDefaultTitle();
                 filterAndRender();
             });
         }
@@ -683,17 +657,10 @@
         document.getElementById('btn-add-all').addEventListener('click', () => {
             const selectedYears = getSelectedYears();
             const selectedTypes = getSelectedTypes();
-            const gradeVal = document.getElementById('filter-grade')?.value || '';
-            const subjectVal = document.getElementById('filter-subject')?.value || '';
             
-            if (!gradeVal || !subjectVal || selectedYears.length === 0) {
-                showToast('請先選擇至少一個年度、科目與年級。', 'error');
-                return;
-            }
             const filtered = allQuestions.filter(q => {
-                if (!selectedYears.includes(q.year)) return false;
+                if (selectedYears.length > 0 && !selectedYears.includes(q.year)) return false;
                 if (selectedTypes.length > 0 && !selectedTypes.includes(q.type)) return false;
-                if (q.grade !== gradeVal || q.subject !== subjectVal) return false;
                 return true;
             });
             
@@ -768,11 +735,36 @@
             downloadBtn.querySelector('span').textContent = '正在打包 Word 中...';
             
             try {
-                await window.exportQuestionsToWord(finalQuestions, title, subtitle);
-                showToast('\u{1F389} Word \u8003\u5377\u4E0B\u8F09\u6210\u529F\uFF01');
+                const response = await fetch('/api/export-docx', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        subtitle: subtitle,
+                        questionIds: questionIds
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('伺服器處理失敗');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showToast('🎉 Word 考卷下載成功！');
             } catch (err) {
-                console.error('Word \u532F\u51FA\u5931\u6557:', err);
-                showToast('\u751F\u6210 Word \u5931\u6557\uFF0C\u8ACB\u91CD\u8A66\uFF01', 'error');
+                console.error('Word 匯出失敗:', err);
+                showToast('生成 Word 失敗，請重試！', 'error');
             } finally {
                 downloadBtn.disabled = false;
                 downloadBtn.querySelector('span').textContent = '📥 生成並下載 A3 格式 Word 檔 (.docx)';
