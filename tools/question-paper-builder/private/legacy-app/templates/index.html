@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>歷屆篩選測驗出卷系統</title>
+    <title>AI 考古題庫裁切與出卷系統</title>
     <!-- Google Fonts: Outfit and Noto Sans TC -->
-    <link rel="stylesheet" href="./css/style.css?v=20260713-4">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- PDF.js via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 </head>
 <body>
     <div class="stars-container"></div>
@@ -15,7 +20,7 @@
             <div class="logo-area">
                 <span class="logo-icon">📚</span>
                 <div class="logo-text">
-                    <h1>歷屆篩選測驗出卷系統</h1>
+                    <h1>歷屆篩選測驗題庫出題系統</h1>
                 </div>
             </div>
         </header>
@@ -47,10 +52,13 @@
                                     <h3 class="panel-step-title">2. 選擇科目與年級</h3>
                                     <div class="select-inline-group">
                                         <select id="filter-subject" class="styled-select">
-                                            <option value="">選擇科目</option>
+                                            <option value="國語">國語</option>
+                                            <option value="數學">數學</option>
                                         </select>
                                         <select id="filter-grade" class="styled-select">
-                                            <option value="">選擇年級</option>
+                                            <option value="一年級">一年級</option>
+                                            <option value="二年級">二年級</option>
+                                            <option value="三年級">三年級</option>
                                         </select>
                                     </div>
                                 </div>
@@ -86,7 +94,7 @@
                         <div class="paper-setup-form">
                             <div class="form-group">
                                 <label for="paper-title">考卷大標題</label>
-                                <input type="text" id="paper-title" value="歷屆篩選測驗">
+                                <input type="text" id="paper-title" value="115學年度第一學期期末考試卷">
                             </div>
                             <div class="form-group">
                                 <label for="paper-subtitle">副標題 (如：三年級國語科)</label>
@@ -129,9 +137,7 @@
     </div>
 
     <!-- 載入 JS 模組 -->
-    <script src="./vendor/docx-9.7.1.iife.js"></script>
-    <script src="./js/app.js"></script>
-    <script src="./js/word-export.js?v=20260713-7"></script>
-    <script src="./js/generator.js?v=20260713-6"></script>
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/generator.js"></script>
 </body>
 </html>
